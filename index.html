@@ -1,8 +1,9 @@
-<!DOCTYPE html>
+    <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <title>India Real-Time New Year Clock</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
 body {
@@ -15,25 +16,28 @@ body {
     flex-direction: column;
     color: white;
     font-family: Arial, sans-serif;
+    overflow: hidden;
 }
 
-/* CLOCK FACE */
+/* CLOCK FACE — RESPONSIVE */
 .clock {
-    width: 320px;
-    height: 320px;
-    border: 8px solid white;
+    width: min(90vw, 90vh);
+    height: min(90vw, 90vh);
+    border: 1.8vw solid white;
     border-radius: 50%;
     position: relative;
 }
 
-/* NUMBERS */
+/* NUMBERS — SCALE WITH CLOCK */
 .number {
     position: absolute;
-    width: 30px;
-    height: 30px;
+    width: 8vw;
+    height: 8vw;
+    max-width: 40px;
+    max-height: 40px;
     text-align: center;
-    line-height: 30px;
-    font-size: 20px;
+    line-height: 1;
+    font-size: clamp(18px, 4vw, 28px);
     font-weight: bold;
     color: white;
 }
@@ -47,14 +51,31 @@ body {
     background: white;
 }
 
-.hour { width: 35%; height: 6px; }
-.minute { width: 45%; height: 4px; }
-.second { width: 48%; height: 2px; background: red; }
+.hour {
+    width: 30%;
+    height: 1.2vw;
+    max-height: 6px;
+}
 
-/* CENTER */
+.minute {
+    width: 42%;
+    height: 0.9vw;
+    max-height: 4px;
+}
+
+.second {
+    width: 46%;
+    height: 0.4vw;
+    max-height: 2px;
+    background: red;
+}
+
+/* CENTER DOT */
 .center {
-    width: 10px;
-    height: 10px;
+    width: 3vw;
+    height: 3vw;
+    max-width: 12px;
+    max-height: 12px;
     background: white;
     border-radius: 50%;
     position: absolute;
@@ -65,8 +86,9 @@ body {
 
 /* MESSAGE */
 #message {
-    margin-top: 30px;
-    font-size: 28px;
+    position: absolute;
+    bottom: 5vh;
+    font-size: clamp(22px, 5vw, 32px);
     color: gold;
     display: none;
     text-align: center;
@@ -86,20 +108,20 @@ canvas {
 
 <div class="clock">
 
-    <!-- Numbers (12 at top) -->
-    <div class="number" style="top: 8px; left: 50%; transform: translateX(-50%);">12</div>
-    <div class="number" style="top: 50%; right: 8px; transform: translateY(-50%);">3</div>
-    <div class="number" style="bottom: 8px; left: 50%; transform: translateX(-50%);">6</div>
-    <div class="number" style="top: 50%; left: 8px; transform: translateY(-50%);">9</div>
+    <!-- Numbers -->
+    <div class="number" style="top: 2%; left: 50%; transform: translateX(-50%);">12</div>
+    <div class="number" style="top: 50%; right: 2%; transform: translateY(-50%);">3</div>
+    <div class="number" style="bottom: 2%; left: 50%; transform: translateX(-50%);">6</div>
+    <div class="number" style="top: 50%; left: 2%; transform: translateY(-50%);">9</div>
 
-    <div class="number" style="top: 45px; right: 70px;">1</div>
-    <div class="number" style="top: 85px; right: 30px;">2</div>
-    <div class="number" style="bottom: 85px; right: 30px;">4</div>
-    <div class="number" style="bottom: 45px; right: 70px;">5</div>
-    <div class="number" style="bottom: 45px; left: 70px;">7</div>
-    <div class="number" style="bottom: 85px; left: 30px;">8</div>
-    <div class="number" style="top: 85px; left: 30px;">10</div>
-    <div class="number" style="top: 45px; left: 70px;">11</div>
+    <div class="number" style="top: 12%; right: 18%;">1</div>
+    <div class="number" style="top: 26%; right: 8%;">2</div>
+    <div class="number" style="bottom: 26%; right: 8%;">4</div>
+    <div class="number" style="bottom: 12%; right: 18%;">5</div>
+    <div class="number" style="bottom: 12%; left: 18%;">7</div>
+    <div class="number" style="bottom: 26%; left: 8%;">8</div>
+    <div class="number" style="top: 26%; left: 8%;">10</div>
+    <div class="number" style="top: 12%; left: 18%;">11</div>
 
     <!-- Hands -->
     <div class="hand hour" id="hour"></div>
@@ -118,7 +140,6 @@ const minuteHand = document.getElementById("minute");
 const secondHand = document.getElementById("second");
 const message = document.getElementById("message");
 
-/* IST TIME */
 function getIST() {
     const now = new Date();
     const utc = now.getTime() + now.getTimezoneOffset() * 60000;
@@ -129,17 +150,14 @@ let lastYearShown = null;
 
 function updateClock() {
     const now = getIST();
-
     const sec = now.getSeconds();
     const min = now.getMinutes();
     const hr = now.getHours() % 12;
 
-    /* ALIGN HANDS WITH 12 AT TOP */
     secondHand.style.transform = `rotate(${sec * 6 - 90}deg)`;
     minuteHand.style.transform = `rotate(${min * 6 - 90}deg)`;
     hourHand.style.transform = `rotate(${hr * 30 + min * 0.5 - 90}deg)`;
 
-    /* NEW YEAR CHECK */
     if (
         now.getMonth() === 0 &&
         now.getDate() === 1 &&
@@ -157,7 +175,6 @@ function updateClock() {
 setInterval(updateClock, 1000);
 updateClock();
 
-/* NEW YEAR MESSAGE */
 function showNewYear(year) {
     message.innerText = `🎉 Happy New Year ${year} 🎉`;
     message.style.display = "block";
