@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>India Real-Time New Year Clock</title>
+
+<style>
+body {
+    margin: 0;
+    background: black;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    flex-direction: column;
+    color: white;
+    font-family: Arial, sans-serif;
+}
+
+/* CLOCK FACE */
+.clock {
+    width: 320px;
+    height: 320px;
+    border: 8px solid white;
+    border-radius: 50%;
+    position: relative;
+}
+
+/* NUMBERS */
+.number {
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    text-align: center;
+    line-height: 30px;
+    font-size: 20px;
+    font-weight: bold;
+    color: white;
+}
+
+/* HANDS */
+.hand {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform-origin: 0% 50%;
+    background: white;
+}
+
+.hour { width: 35%; height: 6px; }
+.minute { width: 45%; height: 4px; }
+.second { width: 48%; height: 2px; background: red; }
+
+/* CENTER */
+.center {
+    width: 10px;
+    height: 10px;
+    background: white;
+    border-radius: 50%;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+/* MESSAGE */
+#message {
+    margin-top: 30px;
+    font-size: 28px;
+    color: gold;
+    display: none;
+    text-align: center;
+}
+
+/* FIREWORKS */
+canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+}
+</style>
+</head>
+
+<body>
+
+<div class="clock">
+
+    <!-- Numbers (12 at top) -->
+    <div class="number" style="top: 8px; left: 50%; transform: translateX(-50%);">12</div>
+    <div class="number" style="top: 50%; right: 8px; transform: translateY(-50%);">3</div>
+    <div class="number" style="bottom: 8px; left: 50%; transform: translateX(-50%);">6</div>
+    <div class="number" style="top: 50%; left: 8px; transform: translateY(-50%);">9</div>
+
+    <div class="number" style="top: 45px; right: 70px;">1</div>
+    <div class="number" style="top: 85px; right: 30px;">2</div>
+    <div class="number" style="bottom: 85px; right: 30px;">4</div>
+    <div class="number" style="bottom: 45px; right: 70px;">5</div>
+    <div class="number" style="bottom: 45px; left: 70px;">7</div>
+    <div class="number" style="bottom: 85px; left: 30px;">8</div>
+    <div class="number" style="top: 85px; left: 30px;">10</div>
+    <div class="number" style="top: 45px; left: 70px;">11</div>
+
+    <!-- Hands -->
+    <div class="hand hour" id="hour"></div>
+    <div class="hand minute" id="minute"></div>
+    <div class="hand second" id="second"></div>
+
+    <div class="center"></div>
+</div>
+
+<div id="message"></div>
+<canvas id="fireworks"></canvas>
+
+<script>
+const hourHand = document.getElementById("hour");
+const minuteHand = document.getElementById("minute");
+const secondHand = document.getElementById("second");
+const message = document.getElementById("message");
+
+/* IST TIME */
+function getIST() {
+    const now = new Date();
+    const utc = now.getTime() + now.getTimezoneOffset() * 60000;
+    return new Date(utc + 5.5 * 3600000);
+}
+
+let lastYearShown = null;
+
+function updateClock() {
+    const now = getIST();
+
+    const sec = now.getSeconds();
+    const min = now.getMinutes();
+    const hr = now.getHours() % 12;
+
+    /* ALIGN HANDS WITH 12 AT TOP */
+    secondHand.style.transform = `rotate(${sec * 6 - 90}deg)`;
+    minuteHand.style.transform = `rotate(${min * 6 - 90}deg)`;
+    hourHand.style.transform = `rotate(${hr * 30 + min * 0.5 - 90}deg)`;
+
+    /* NEW YEAR CHECK */
+    if (
+        now.getMonth() === 0 &&
+        now.getDate() === 1 &&
+        now.getHours() === 0 &&
+        now.getMinutes() === 0
+    ) {
+        const year = now.getFullYear();
+        if (year !== lastYearShown) {
+            showNewYear(year);
+            lastYearShown = year;
+        }
+    }
+}
+
+setInterval(updateClock, 1000);
+updateClock();
+
+/* NEW YEAR MESSAGE */
+function showNewYear(year) {
+    message.innerText = `🎉 Happy New Year ${year} 🎉`;
+    message.style.display = "block";
+    startFireworks();
+    setTimeout(() => message.style.display = "none", 15000);
+}
+
+/* FIREWORKS */
+const canvas = document.getElementById("fireworks");
+const ctx = canvas.getContext("2d");
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+function startFireworks() {
+    let particles = [];
+    for (let i = 0; i < 250; i++) {
+        particles.push({
+            x: canvas.width / 2,
+            y: canvas.height / 2,
+            vx: (Math.random() - 0.5) * 12,
+            vy: (Math.random() - 0.5) * 12,
+            life: 100
+        });
+    }
+
+    function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        particles.forEach(p => {
+            ctx.fillStyle = "gold";
+            ctx.fillRect(p.x, p.y, 3, 3);
+            p.x += p.vx;
+            p.y += p.vy;
+            p.life--;
+        });
+        particles = particles.filter(p => p.life > 0);
+        if (particles.length > 0) requestAnimationFrame(animate);
+    }
+    animate();
+}
+</script>
+
+</body>
+</html>
