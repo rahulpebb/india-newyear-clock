@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>India Real-Time New Year Clock</title>
+<title>India Real-Time Analogue Clock</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
@@ -19,8 +19,8 @@ body {
 
 /* CLOCK */
 .clock {
-    width: min(92vw, 92vh);
-    height: min(92vw, 92vh);
+    width: min(94vw, 94vh);
+    height: min(94vw, 94vh);
     border: 1.6vw solid white;
     border-radius: 50%;
     position: relative;
@@ -33,6 +33,19 @@ body {
     font-weight: bold;
     font-size: clamp(18px, 4vw, 28px);
     transform: translate(-50%, -50%);
+}
+
+
+}
+
+.tick.minor {
+    width: 2px;
+    height: 6%;
+}
+
+.tick.major {
+    width: 3px;
+    height: 9%;
 }
 
 /* HANDS */
@@ -72,12 +85,25 @@ body {
     transform: translate(-50%, -50%);
 }
 
-/* FIREWORK CANVAS */
+/* NEW YEAR MESSAGE */
+#message {
+    position: fixed;
+    top: 10%;
+    width: 100%;
+    text-align: center;
+    font-size: clamp(26px, 6vw, 40px);
+    color: gold;
+    display: none;
+    z-index: 10;
+}
+
+/* FIREWORKS */
 canvas {
     position: fixed;
     top: 0;
     left: 0;
     pointer-events: none;
+    z-index: 9;
 }
 </style>
 </head>
@@ -85,37 +111,48 @@ canvas {
 <body>
 
 <div class="clock" id="clock">
-    <!-- Hands -->
     <div class="hand hour" id="hour"></div>
     <div class="hand minute" id="minute"></div>
     <div class="hand second" id="second"></div>
     <div class="center"></div>
 </div>
 
+<div id="message"></div>
 <canvas id="fireworks"></canvas>
 
 <script>
 const clock = document.getElementById("clock");
 
-/* CREATE NUMBERS MATHEMATICALLY */
+/* ===== NUMBERS ===== */
 for (let i = 1; i <= 12; i++) {
     const num = document.createElement("div");
     num.className = "number";
     num.innerText = i;
 
     const angle = (i - 3) * 30 * Math.PI / 180;
-    const radius = 42; // percentage of clock radius
+    const radius = 42;
 
-    const x = 50 + radius * Math.cos(angle);
-    const y = 50 + radius * Math.sin(angle);
-
-    num.style.left = x + "%";
-    num.style.top = y + "%";
+    num.style.left = (50 + radius * Math.cos(angle)) + "%";
+    num.style.top  = (50 + radius * Math.sin(angle)) + "%";
 
     clock.appendChild(num);
 }
 
-/* HAND REFERENCES */
+/* ===== TICKS (CORRECTLY ALIGNED) ===== */
+for (let i = 0; i < 60; i++) {
+    const tick = document.createElement("div");
+    tick.className = "tick " + (i % 5 === 0 ? "major" : "minor");
+
+    const angle = i * 6;
+    const radius = 46; // distance from center in %
+
+    tick.style.transform =
+        `rotate(${angle}deg) translateY(-${radius}%)`;
+
+    clock.appendChild(tick);
+}
+
+/* HANDS */
 const hourHand = document.getElementById("hour");
 const minuteHand = document.getElementById("minute");
 const secondHand = document.getElementById("second");
@@ -127,19 +164,79 @@ function getIST() {
     return new Date(utc + 5.5 * 3600000);
 }
 
+/* NEW YEAR */
+let lastYearShown = null;
+const message = document.getElementById("message");
+
+/* SMOOTH LOOP */
 function updateClock() {
     const now = getIST();
-    const sec = now.getSeconds();
-    const min = now.getMinutes();
-    const hr = now.getHours() % 12;
+
+    const ms  = now.getMilliseconds();
+    const sec = now.getSeconds() + ms / 1000;
+    const min = now.getMinutes() + sec / 60;
+    const hr  = (now.getHours() % 12) + min / 60;
 
     secondHand.style.transform = `rotate(${sec * 6 - 90}deg)`;
     minuteHand.style.transform = `rotate(${min * 6 - 90}deg)`;
-    hourHand.style.transform = `rotate(${hr * 30 + min * 0.5 - 90}deg)`;
+    hourHand.style.transform   = `rotate(${hr * 30 - 90}deg)`;
+
+    if (
+        now.getMonth() === 0 &&
+        now.getDate() === 1 &&
+        now.getHours() === 0 &&
+        now.getMinutes() === 0
+    ) {
+        const year = now.getFullYear();
+        if (year !== lastYearShown) {
+            showNewYear(year);
+            lastYearShown = year;
+        }
+    }
+
+    requestAnimationFrame(updateClock);
+}
+updateClock();
+
+/* FIREWORKS */
+const canvas = document.getElementById("fireworks");
+const ctx = canvas.getContext("2d");
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+function showNewYear(year) {
+    message.innerText = `🎉 Happy New Year ${year} 🎉`;
+    message.style.display = "block";
+    startFireworks();
+    setTimeout(() => message.style.display = "none", 15000);
 }
 
-setInterval(updateClock, 1000);
-updateClock();
+function startFireworks() {
+    let particles = [];
+    for (let i = 0; i < 300; i++) {
+        particles.push({
+            x: canvas.width / 2,
+            y: canvas.height / 2,
+            vx: (Math.random() - 0.5) * 14,
+            vy: (Math.random() - 0.5) * 14,
+            life: 120
+        });
+    }
+
+    function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        particles.forEach(p => {
+            ctx.fillStyle = "gold";
+            ctx.fillRect(p.x, p.y, 3, 3);
+            p.x += p.vx;
+            p.y += p.vy;
+            p.life--;
+        });
+        particles = particles.filter(p => p.life > 0);
+        if (particles.length) requestAnimationFrame(animate);
+    }
+    animate();
+}
 </script>
 
 </body>
